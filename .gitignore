@@ -2,10 +2,13 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+*/model/1/*
 # C extensions
 *.so
-
+*.safetensors
+*.bpe.model
+*.onnx
+*.onnx_data
 # Distribution / packaging
 .Python
 build/
