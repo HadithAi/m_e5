@@ -90,13 +90,13 @@ with Triton(config=config) as triton:
         model_name="e5",
         infer_func=infer_funcs,
         inputs=[
-            Tensor(name="instruction", dtype=np.bytes_, shape=(-1,-1)),
-            Tensor(name="text_snippet", dtype=np.bytes_, shape=(-1,-1))
+            Tensor(name="instruction", dtype=np.bytes_, shape=()),
+            Tensor(name="text_snippet", dtype=np.bytes_, shape=())
         ],
         outputs=[
-            Tensor(name="embedding", dtype=np.float32, shape=(-1,))
+            Tensor(name="embedding", dtype=np.float32, shape=())
         ],
-        config=ModelConfig(max_batch_size=2),
+        config=ModelConfig(max_batch_size=1),
         strict=True,
     )
     logger.info("Serving inference")
