@@ -7,12 +7,14 @@ import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 from pytriton.decorators import batch
 from pytriton.model_config import ModelConfig, Tensor
-from pytriton.triton import Triton
 from pytriton.triton import Triton, TritonConfig
+from pyngrok import ngrok, conf
 
+# Configure logging
 logger = logging.getLogger("e5_embedding_server")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s: %(message)s")
 
+# Load model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model = AutoModel.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model.eval()
@@ -53,10 +55,17 @@ def _infer_fn(**inputs: np.ndarray):
     embeddings = average_pool(outputs.last_hidden_state, batch_dict["attention_mask"])
     embeddings = F.normalize(embeddings, p=2, dim=1)
 
-    embeddings_np = embeddings.cpu().numpy()  
+    embeddings_np = embeddings.cpu().numpy()
 
     return {"embedding": embeddings_np}
 
+NGROK_AUTH_TOKEN = "2vyx4apXECvTFqr9pTU213ErpUv_4d4PL9jTStxyrWquUPSEZ"  
+conf.get_default().auth_token = NGROK_AUTH_TOKEN
+
+logger.info("Starting ngrok tunnel for HTTP port 8015")
+http_tunnel = ngrok.connect(8015, proto="http", bind_tls=True)
+public_url = http_tunnel.public_url
+print(f"**************Ngrok tunnel established at: {public_url}")
 
 config = TritonConfig(http_port=8015, grpc_port=8016, metrics_port=8017)
 with Triton(config=config) as triton:
@@ -71,7 +80,7 @@ with Triton(config=config) as triton:
         outputs=[
             Tensor(name="embedding", dtype=np.float32, shape=(-1, 1024))
         ],
-        config=ModelConfig(max_batch_size=2),  
+        config=ModelConfig(max_batch_size=2),
         strict=True,
     )
     logger.info("Serving inference")
