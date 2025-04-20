@@ -8,6 +8,7 @@ from transformers import AutoTokenizer, AutoModel
 from pytriton.decorators import batch
 from pytriton.model_config import ModelConfig, Tensor
 from pytriton.triton import Triton
+from pytriton.triton import Triton, TritonConfig
 
 # Set up logging
 logger = logging.getLogger("e5_embedding_server")
@@ -64,8 +65,9 @@ def _infer_fn(**inputs: np.ndarray):
 
     return {"embedding": embeddings_np}
 
-# Set up and run the Triton server
-with Triton() as triton:
+
+config = TritonConfig(http_port=8015, grpc_port=8016, metrics_port=8017)
+with Triton(config=config) as triton:
     logger.info("Loading multilingual-e5-large-instruct model.")
     triton.bind(
         model_name="E5_Embedding",
