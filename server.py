@@ -10,11 +10,9 @@ from pytriton.model_config import ModelConfig, Tensor
 from pytriton.triton import Triton
 from pytriton.triton import Triton, TritonConfig
 
-# Set up logging
 logger = logging.getLogger("e5_embedding_server")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s: %(message)s")
 
-# Initialize tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model = AutoModel.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model.eval()
@@ -31,17 +29,14 @@ def _infer_fn(**inputs: np.ndarray):
     """Inference function for batched requests."""
     instruction_batch, text_snippet_batch = inputs.values()
 
-    # Convert numpy bytes to strings
     instruction_batch = np.char.decode(instruction_batch.astype("bytes"), "utf-8")
     text_snippet_batch = np.char.decode(text_snippet_batch.astype("bytes"), "utf-8")
 
-    # Combine instruction and text for each item in the batch
     combined_texts = [
         f"Instruct: {instr.item()}\nQuery: {text.item()}"
         for instr, text in zip(instruction_batch, text_snippet_batch)
     ]
 
-    # Tokenize the batch
     batch_dict = tokenizer(
         combined_texts,
         max_length=512,
@@ -52,16 +47,13 @@ def _infer_fn(**inputs: np.ndarray):
     if torch.cuda.is_available():
         batch_dict = {k: v.to("cuda") for k, v in batch_dict.items()}
 
-    # Model inference
     with torch.no_grad():
         outputs = model(**batch_dict)
 
-    # Compute embeddings
     embeddings = average_pool(outputs.last_hidden_state, batch_dict["attention_mask"])
     embeddings = F.normalize(embeddings, p=2, dim=1)
 
-    # Convert to numpy
-    embeddings_np = embeddings.cpu().numpy()  # Shape: (batch_size, 1024)
+    embeddings_np = embeddings.cpu().numpy()  
 
     return {"embedding": embeddings_np}
 
@@ -70,7 +62,7 @@ config = TritonConfig(http_port=8015, grpc_port=8016, metrics_port=8017)
 with Triton(config=config) as triton:
     logger.info("Loading multilingual-e5-large-instruct model.")
     triton.bind(
-        model_name="E5_Embedding",
+        model_name="e5",
         infer_func=_infer_fn,
         inputs=[
             Tensor(name="instruction", dtype=np.bytes_, shape=(-1,)),
@@ -79,7 +71,7 @@ with Triton(config=config) as triton:
         outputs=[
             Tensor(name="embedding", dtype=np.float32, shape=(-1, 1024))
         ],
-        config=ModelConfig(max_batch_size=16),  # Adjusted for memory efficiency
+        config=ModelConfig(max_batch_size=2),  
         strict=True,
     )
     logger.info("Serving inference")
