@@ -10,11 +10,9 @@ from pytriton.model_config import ModelConfig, Tensor
 from pytriton.triton import Triton, TritonConfig
 from pyngrok import ngrok, conf
 
-# Configure logging
 logger = logging.getLogger("e5_embedding_server")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s: %(message)s")
 
-# Load model and tokenizer
 tokenizer = AutoTokenizer.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model = AutoModel.from_pretrained("intfloat/multilingual-e5-large-instruct")
 model.eval()
