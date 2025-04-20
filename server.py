@@ -57,6 +57,10 @@ def _infer_fn(**inputs: np.ndarray):
 
     embeddings_np = embeddings.cpu().numpy()
 
+    if embeddings_np.ndim == 1:
+        embeddings_np = np.expand_dims(embeddings_np, axis=0)
+
+
     return {"embedding": embeddings_np}
 
 NGROK_AUTH_TOKEN = "2vyx4apXECvTFqr9pTU213ErpUv_4d4PL9jTStxyrWquUPSEZ"  
