@@ -6,7 +6,7 @@ text_snippet  = "The quick brown fox jumps over the lazy dog."
 
 # note: no "https://" here, and ssl=True
 triton_client = httpclient.InferenceServerClient(
-    url="4922-34-138-77-72.ngrok-free.app",
+    url="f215-34-145-40-185.ngrok-free.app",
     ssl=True
 )
 
