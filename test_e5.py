@@ -6,7 +6,7 @@ text_snippet  = "The quick brown fox jumps over the lazy dog."
 
 # note: no "https://" here, and ssl=True
 triton_client = httpclient.InferenceServerClient(
-    url="f215-34-145-40-185.ngrok-free.app",
+    url="603d-34-91-39-181.ngrok-free.app",
     ssl=True
 )
 
@@ -16,8 +16,8 @@ text_snippet_np  = np.array([[text_snippet]],  dtype=object)
 
 # declare both inputs with two dims: [batch, seq_count]
 inputs = [
-    httpclient.InferInput("instruction",   [1, 1], "BYTES"),
-    httpclient.InferInput("text_snippet",  [1, 1], "BYTES"),
+    httpclient.InferInput("instruction",   [1], "BYTES"),
+    httpclient.InferInput("text_snippet",  [1], "BYTES"),
 ]
 inputs[0].set_data_from_numpy(instruction_np)
 inputs[1].set_data_from_numpy(text_snippet_np)
