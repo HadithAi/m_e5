@@ -90,11 +90,11 @@ with Triton(config=config) as triton:
         model_name="e5",
         infer_func=infer_funcs,
         inputs=[
-            Tensor(name="instruction", dtype=np.bytes_, shape=()),
-            Tensor(name="text_snippet", dtype=np.bytes_, shape=())
+            Tensor(name="instruction", dtype=np.bytes_, shape=[1]),
+            Tensor(name="text_snippet", dtype=np.bytes_, shape=[1])
         ],
         outputs=[
-            Tensor(name="embedding", dtype=np.float32, shape=())
+            Tensor(name="embedding", dtype=np.float32, shape=[1024])
         ],
         config=ModelConfig(max_batch_size=1),
         strict=True,
