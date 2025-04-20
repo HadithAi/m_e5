@@ -54,12 +54,7 @@ def _infer_fn(**inputs: np.ndarray):
 
     embeddings = average_pool(outputs.last_hidden_state, batch_dict["attention_mask"])
     embeddings = F.normalize(embeddings, p=2, dim=1)
-
     embeddings_np = embeddings.cpu().numpy()
-
-    if embeddings_np.ndim == 1:
-        embeddings_np = np.expand_dims(embeddings_np, axis=0)
-
 
     return {"embedding": embeddings_np}
 
@@ -78,11 +73,11 @@ with Triton(config=config) as triton:
         model_name="e5",
         infer_func=_infer_fn,
         inputs=[
-            Tensor(name="instruction", dtype=np.bytes_, shape=(-1,)),
-            Tensor(name="text_snippet", dtype=np.bytes_, shape=(-1,))
+            Tensor(name="instruction", dtype=np.bytes_, shape=(1)),
+            Tensor(name="text_snippet", dtype=np.bytes_, shape=(1))
         ],
         outputs=[
-            Tensor(name="embedding", dtype=np.float32, shape=(-1, 1024))
+            Tensor(name="embedding", dtype=np.float32, shape=(1024))
         ],
         config=ModelConfig(max_batch_size=2),
         strict=True,
