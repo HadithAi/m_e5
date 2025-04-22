@@ -96,7 +96,7 @@ with Triton(config=config) as triton:
         outputs=[
             Tensor(name="embedding", dtype=np.float32, shape=[1024])
         ],
-        config=ModelConfig(max_batch_size=1),
+        config=ModelConfig(max_batch_size=0),
         strict=True,
     )
     logger.info("Serving inference")

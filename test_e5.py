@@ -6,7 +6,7 @@ instruction = "retrieve the relevant passage"
 text_snippet = "The quick brown fox jumps over the lazy dog."
 
 triton_client = httpclient.InferenceServerClient(
-    url="bfc9-34-91-39-181.ngrok-free.app",
+    url="375a-34-125-12-4.ngrok-free.app",
     ssl=True
 )
 
