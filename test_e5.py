@@ -6,12 +6,12 @@ instruction = "retrieve the relevant passage"
 text_snippet = "The quick brown fox jumps over the lazy dog."
 
 triton_client = httpclient.InferenceServerClient(
-    url="375a-34-125-12-4.ngrok-free.app",
+    url="da39-34-125-12-4.ngrok-free.app",
     ssl=True
 )
 
-instruction_np = np.array([instruction], dtype=object)
-text_snippet_np = np.array([text_snippet], dtype=object)
+instruction_np = np.array([[instruction]], dtype=object)
+text_snippet_np = np.array([[text_snippet]], dtype=object)
 
 inputs = [
     httpclient.InferInput("instruction", [1], "BYTES"),
