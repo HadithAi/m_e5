@@ -19,7 +19,7 @@ output [
 
 instance_group [
   {
-    count: 4
+    count: 0
     kind: KIND_GPU
   }
 ]
