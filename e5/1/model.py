@@ -5,55 +5,47 @@ import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
 
 def average_pool(last_hidden_states: Tensor, attention_mask: Tensor) -> Tensor:
+    """Mean-pool the token representations, masking out padding tokens."""
     last_hidden = last_hidden_states.masked_fill(~attention_mask[..., None].bool(), 0.0)
     return last_hidden.sum(dim=1) / attention_mask.sum(dim=1)[..., None]
 
 class TritonPythonModel:
     def initialize(self, args):
-        """Load the tokenizer and model during server startup."""
-        self.tokenizer = AutoTokenizer.from_pretrained('intfloat/multilingual-e5-large-instruct')
-        self.model = AutoModel.from_pretrained('intfloat/multilingual-e5-large-instruct')
+        """Load tokenizer and model once at server startup."""
+        self.tokenizer = AutoTokenizer.from_pretrained('intfloat/multilingual-e5-large')
+        self.model = AutoModel.from_pretrained('intfloat/multilingual-e5-large')
         self.model.eval()
-        # Move to GPU if available
         if torch.cuda.is_available():
-            self.model = self.model.to('cuda')
+            self.model.to('cuda')
 
     def execute(self, requests):
-        """Process inference requests."""
+        """Process a batch of inference requests."""
         responses = []
         for request in requests:
-            # Extract inputs
-            instr_tensor = pb_utils.get_input_tensor_by_name(request, "instruction")
-            text_tensor = pb_utils.get_input_tensor_by_name(request, "text_snippet")
-            instruction = instr_tensor.as_numpy()[0].decode('utf-8')  # Single string
-            text_snippet = text_tensor.as_numpy()[0].decode('utf-8')  # Single string
+            text_tensor = pb_utils.get_input_tensor_by_name(request, "text")
+            text = text_tensor.as_numpy()[0].decode('utf-8')
 
-            # Combine instruction and text (mimicking get_detailed_instruct)
-            combined_text = f'Instruct: {instruction}\nQuery: {text_snippet}'
+            # Expect the user-provided text to start with "query: " or "passage: "
+            input_text = text
 
-            # Tokenize
-            batch_dict = self.tokenizer(
-                [combined_text],  # List with one text
+            batch = self.tokenizer(
+                [input_text],
                 max_length=512,
                 padding=True,
                 truncation=True,
                 return_tensors='pt'
             )
             if torch.cuda.is_available():
-                batch_dict = {k: v.to('cuda') for k, v in batch_dict.items()}
+                batch = {k: v.to('cuda') for k, v in batch.items()}
 
-            # Model inference
             with torch.no_grad():
-                outputs = self.model(**batch_dict)
+                out = self.model(**batch)
 
-            # Compute embedding
-            embeddings = average_pool(outputs.last_hidden_state, batch_dict['attention_mask'])
-            embeddings = F.normalize(embeddings, p=2, dim=1)
-            embedding_np = embeddings.cpu().numpy()[0]  # Shape: [1024]
+            emb = average_pool(out.last_hidden_state, batch['attention_mask'])
+            emb = F.normalize(emb, p=2, dim=1)
+            emb_np = emb.cpu().numpy()[0]
 
-            # Create output tensor
-            output_tensor = pb_utils.Tensor("embedding", embedding_np)
-            response = pb_utils.InferenceResponse(output_tensors=[output_tensor])
-            responses.append(response)
+            out_tensor = pb_utils.Tensor("embedding", emb_np)
+            responses.append(pb_utils.InferenceResponse(output_tensors=[out_tensor]))
 
         return responses

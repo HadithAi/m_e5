@@ -3,12 +3,7 @@ backend: "python"
 
 input [
   {
-    name: "instruction"
-    data_type: TYPE_STRING
-    dims: [1]
-  },
-  {
-    name: "text_snippet"
+    name: "text"
     data_type: TYPE_STRING
     dims: [1]
   }
